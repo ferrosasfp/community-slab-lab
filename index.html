@@ -1,0 +1,180 @@
+<!doctype html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>Doodles Slab Lab · 10/10 Trading Cards</title>
+    <meta
+      name="description"
+      content="Turn any Doodle into a Pokemon-style graded slab card. Preview, animate, and export as PNG, GIF, WebM, or GLB."
+    />
+    <meta name="theme-color" content="#ffd5e8" />
+
+    <!-- Warm up connections to CDN + IPFS gateways -->
+    <link rel="preconnect" href="https://fonts.googleapis.com" />
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+    <link rel="preconnect" href="https://gateway.pinata.cloud" crossorigin />
+    <link rel="preconnect" href="https://dweb.link" crossorigin />
+    <link rel="preconnect" href="https://nftstorage.link" crossorigin />
+    <link rel="preconnect" href="https://cdn.jsdelivr.net" crossorigin />
+
+    <link
+      href="https://fonts.googleapis.com/css2?family=Fredoka:wght@500;600;700&family=Lilita+One&family=Nunito:wght@500;700;800&family=Playfair+Display:ital,wght@1,500;1,600&family=JetBrains+Mono:wght@500;700&display=swap"
+      rel="stylesheet"
+    />
+
+    <!-- Import map: lets dynamic import("three") and "three/addons/*" resolve cleanly -->
+    <script type="importmap">
+      {
+        "imports": {
+          "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.min.js",
+          "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+        }
+      }
+    </script>
+
+    <link rel="stylesheet" href="styles.css" />
+    <!-- Anton: bold display sans for "DOODLES" wordmark like real graded cards -->
+    <link href="https://fonts.googleapis.com/css2?family=Anton&family=Inter:wght@400;500;600;700;800&display=swap" rel="stylesheet" />
+  </head>
+  <body>
+    <div class="sky" aria-hidden="true">
+      <svg class="cloud cloud--1" viewBox="0 0 120 50">
+        <path d="M15 38 Q5 38 5 28 Q5 18 17 18 Q20 6 32 8 Q40 0 50 8 Q60 4 65 14 Q75 12 80 22 Q90 20 92 30 Q100 30 100 38 Z"
+              fill="#ffffff" stroke="#1a1a1a" stroke-width="3" stroke-linejoin="round"/>
+      </svg>
+      <svg class="cloud cloud--2" viewBox="0 0 120 50">
+        <path d="M15 38 Q5 38 5 28 Q5 18 17 18 Q20 6 32 8 Q40 0 50 8 Q60 4 65 14 Q75 12 80 22 Q90 20 92 30 Q100 30 100 38 Z"
+              fill="#ffffff" stroke="#1a1a1a" stroke-width="3" stroke-linejoin="round"/>
+      </svg>
+      <svg class="cloud cloud--3" viewBox="0 0 120 50">
+        <path d="M15 38 Q5 38 5 28 Q5 18 17 18 Q20 6 32 8 Q40 0 50 8 Q60 4 65 14 Q75 12 80 22 Q90 20 92 30 Q100 30 100 38 Z"
+              fill="#ffffff" stroke="#1a1a1a" stroke-width="3" stroke-linejoin="round"/>
+      </svg>
+      <svg class="cloud cloud--4" viewBox="0 0 120 50">
+        <path d="M15 38 Q5 38 5 28 Q5 18 17 18 Q20 6 32 8 Q40 0 50 8 Q60 4 65 14 Q75 12 80 22 Q90 20 92 30 Q100 30 100 38 Z"
+              fill="#ffffff" stroke="#1a1a1a" stroke-width="3" stroke-linejoin="round"/>
+      </svg>
+      <svg class="sparkle sparkle--1" viewBox="0 0 40 40">
+        <path d="M20 2 L23 17 L38 20 L23 23 L20 38 L17 23 L2 20 L17 17 Z"
+              fill="#ffe066" stroke="#1a1a1a" stroke-width="2.5" stroke-linejoin="round"/>
+      </svg>
+      <svg class="sparkle sparkle--2" viewBox="0 0 40 40">
+        <path d="M20 2 L23 17 L38 20 L23 23 L20 38 L17 23 L2 20 L17 17 Z"
+              fill="#ffb4cf" stroke="#1a1a1a" stroke-width="2.5" stroke-linejoin="round"/>
+      </svg>
+      <svg class="sparkle sparkle--3" viewBox="0 0 40 40">
+        <path d="M20 2 L23 17 L38 20 L23 23 L20 38 L17 23 L2 20 L17 17 Z"
+              fill="#a8deff" stroke="#1a1a1a" stroke-width="2.5" stroke-linejoin="round"/>
+      </svg>
+      <svg class="heart heart--1" viewBox="0 0 40 36">
+        <path d="M20 32 C8 24 2 16 6 9 C9 4 15 4 20 10 C25 4 31 4 34 9 C38 16 32 24 20 32 Z"
+              fill="#ff8fb8" stroke="#1a1a1a" stroke-width="3" stroke-linejoin="round"/>
+      </svg>
+    </div>
+
+    <div id="root">
+      <div class="app">
+        <header class="app-masthead">
+          <div class="masthead-inner">
+            <div class="masthead-brand">
+              <p class="masthead-eyebrow">✿ COMMUNITY GRADING LAB ✿</p>
+              <h1 class="masthead-title">
+                <span class="title-word title-word--pink">Doodles</span>
+                <span class="title-word title-word--blue">are</span>
+                <span class="title-grade">10<small>/10</small></span>
+              </h1>
+              <p class="masthead-attribution">
+                made with
+                <svg class="inline-heart" viewBox="0 0 40 36" aria-hidden="true">
+                  <path d="M20 32 C8 24 2 16 6 9 C9 4 15 4 20 10 C25 4 31 4 34 9 C38 16 32 24 20 32 Z"
+                        fill="#ff5fa0" stroke="#1a1a1a" stroke-width="3" stroke-linejoin="round"/>
+                </svg>
+                by
+                <a class="masthead-link" href="https://x.com/md_codes" target="_blank" rel="noopener noreferrer">md codes</a>
+                <span class="dot">·</span>
+                <a class="masthead-link" href="https://opensea.io/collection/doodles-official" target="_blank" rel="noopener noreferrer">collection ↗</a>
+              </p>
+            </div>
+          </div>
+        </header>
+
+        <main class="app-main">
+          <section class="stage" id="stage" aria-label="Trading card preview">
+            <div class="card-float">
+              <canvas id="slabCanvas" class="slab-canvas" aria-label="Doodle trading card"></canvas>
+            </div>
+            <div class="stage-loading" id="stageLoading" hidden>
+              <span class="loading-bubble" id="loadingLabel">loading…</span>
+            </div>
+            <div class="stage-toast" id="stageToast" hidden></div>
+          </section>
+
+          <section class="app-dock" aria-label="Slab controls">
+            <div class="dock-inner">
+              <div class="dock-left">
+                <div class="dock-cluster dock-cluster--collection" role="group" aria-labelledby="dock-collection-label">
+                  <span class="dock-label" id="dock-collection-label">Collection</span>
+                  <div class="seg" role="tablist">
+                    <button class="seg-btn active" data-collection="doodles" role="tab" aria-selected="true">
+                      ✿ DOODLES
+                    </button>
+                  </div>
+                </div>
+
+                <div class="dock-cluster dock-cluster--token">
+                  <span class="dock-label">Token id</span>
+                  <div class="dock-token-line">
+                    <input
+                      id="tokenInput"
+                      class="input"
+                      type="text"
+                      inputmode="numeric"
+                      pattern="[0-9]*"
+                      placeholder="0–9999"
+                      autocomplete="off"
+                      maxlength="4"
+                    />
+                    <button id="slabIt" class="btn primary dock-btn-load">Slab it ✿</button>
+                    <button id="randomSlab" class="btn-icon" title="Random Doodle" aria-label="Pick a random Doodle">
+                      <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true">
+                        <rect x="3.5" y="3.5" width="17" height="17" rx="4.5" />
+                        <circle cx="8.5" cy="8.5" r="1.4" fill="currentColor" stroke="none" />
+                        <circle cx="15.5" cy="8.5" r="1.4" fill="currentColor" stroke="none" />
+                        <circle cx="12" cy="12" r="1.4" fill="currentColor" stroke="none" />
+                        <circle cx="8.5" cy="15.5" r="1.4" fill="currentColor" stroke="none" />
+                        <circle cx="15.5" cy="15.5" r="1.4" fill="currentColor" stroke="none" />
+                      </svg>
+                    </button>
+                  </div>
+                </div>
+              </div>
+
+              <div class="dock-cluster dock-cluster--export">
+                <span class="dock-label">Export</span>
+                <div class="dock-export-row">
+                  <button class="btn btn--pink"     data-export="card-png">Card PNG</button>
+                  <button class="btn btn--blue"     data-export="slab-png">Slab PNG</button>
+                  <button class="btn btn--mint"     data-export="slab-glb">Slab GLB</button>
+                  <button class="btn btn--yellow"   data-export="slab-gif">Slab GIF</button>
+                  <button class="btn btn--lavender" data-export="slab-webm">Slab WebM</button>
+                </div>
+              </div>
+            </div>
+            <p class="dock-error" id="dockError" hidden></p>
+          </section>
+        </main>
+
+        <footer class="app-site-footer">
+          <p class="site-footer-text">
+            <span class="footer-wave">✿ ✿ ✿</span><br />
+            &copy; <span id="footerYear">2026</span> a community love-letter to Doodles · art by Burnt Toast.
+            Not affiliated with Doodles LLC, PSA, or The Pokémon Company. All IP belongs to the respective owners.
+          </p>
+        </footer>
+      </div>
+    </div>
+
+    <script type="module" src="app.js"></script>
+  </body>
+</html>
