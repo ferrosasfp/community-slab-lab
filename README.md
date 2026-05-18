@@ -1,8 +1,9 @@
-# Slab Lab · Community Grading
+# Community Slab Lab
 
 A non-commercial, community-built fan tool for NFT holders. Drop in a token id and get a community-graded slab card with PNG / GIF / GLB / WebM exports — all rendered in your browser.
 
-**Live:** https://doodles-slab-lab.vercel.app
+**Live:** https://community-slab-lab.vercel.app
+&nbsp;&nbsp;_(the previous URL `doodles-slab-lab.vercel.app` still redirects here)_
 
 ## What it does
 
