@@ -301,16 +301,59 @@ function drawSlabFront(canvas, entry) {
   ctx.fill(frameRegion, "evenodd");
   ctx.restore();
 
-  // ── LAYER 2: barely-there rainbow hint over the cream paper only ──
-  // (very low alpha so it doesn't desaturate the NFT image which sits on this card)
+  // ── LAYER 2a: rainbow holo wash over the card (incl. the NFT image) ──
+  // Stronger than the previous "hint" so the foil reads on the artwork itself.
+  // NFT image was pre-saturated to saturate(2.0)/contrast(1.28) so colors hold up.
   ctx.save();
   ctx.globalCompositeOperation = "screen";
   const cardTint = ctx.createLinearGradient(cardX, cardY, cardX + cardW, cardY + cardH);
-  cardTint.addColorStop(0.00, "rgba(255, 80,160,0.04)");
-  cardTint.addColorStop(0.33, "rgba(255,210, 90,0.03)");
-  cardTint.addColorStop(0.66, "rgba( 80,220,255,0.04)");
-  cardTint.addColorStop(1.00, "rgba(200,100,255,0.04)");
+  cardTint.addColorStop(0.00, "rgba(255, 80,160,0.14)");
+  cardTint.addColorStop(0.33, "rgba(255,210, 90,0.11)");
+  cardTint.addColorStop(0.66, "rgba( 80,220,255,0.14)");
+  cardTint.addColorStop(1.00, "rgba(200,100,255,0.14)");
   ctx.fillStyle = cardTint;
+  ctx.fillRect(cardX, cardY, cardW, cardH);
+  ctx.restore();
+
+  // ── LAYER 2b: diagonal foil stripes ONLY over the card area ──
+  // Soft, very low alpha — mimics the holographic line pattern on real foil cards.
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(cardX, cardY, cardW, cardH);
+  ctx.clip();
+  ctx.globalCompositeOperation = "screen";
+  ctx.translate(cardX + cardW / 2, cardY + cardH / 2);
+  ctx.rotate(-0.55);
+  ctx.translate(-(cardX + cardW), -(cardY + cardH));
+  const cardStripeColors = [
+    [255,140,200], [255,210,120], [180,255,180],
+    [140,220,255], [180,180,255], [220,140,220],
+  ];
+  for (let i = 0; i < 12; i++) {
+    const sx = (i / 12) * (cardW * 2.6);
+    const col = cardStripeColors[i % cardStripeColors.length];
+    const g = ctx.createLinearGradient(sx, 0, sx + cardW * 0.08, cardH * 2);
+    g.addColorStop(0.0, `rgba(${col[0]},${col[1]},${col[2]},0)`);
+    g.addColorStop(0.5, `rgba(${col[0]},${col[1]},${col[2]},0.18)`);
+    g.addColorStop(1.0, `rgba(${col[0]},${col[1]},${col[2]},0)`);
+    ctx.fillStyle = g;
+    ctx.fillRect(sx, 0, cardW * 0.08, cardH * 2.5);
+  }
+  ctx.restore();
+
+  // ── LAYER 2c: soft white shine ribbon crossing the card ──
+  ctx.save();
+  ctx.beginPath();
+  ctx.rect(cardX, cardY, cardW, cardH);
+  ctx.clip();
+  ctx.globalCompositeOperation = "screen";
+  const cardShine = ctx.createLinearGradient(cardX + cardW * 0.30, cardY, cardX + cardW * 0.55, cardY + cardH);
+  cardShine.addColorStop(0.00, "rgba(255,255,255,0)");
+  cardShine.addColorStop(0.45, "rgba(255,255,255,0.08)");
+  cardShine.addColorStop(0.50, "rgba(255,255,255,0.22)");
+  cardShine.addColorStop(0.55, "rgba(255,255,255,0.08)");
+  cardShine.addColorStop(1.00, "rgba(255,255,255,0)");
+  ctx.fillStyle = cardShine;
   ctx.fillRect(cardX, cardY, cardW, cardH);
   ctx.restore();
 

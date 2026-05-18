@@ -1,31 +1,37 @@
 /* ===========================================================================
-   Slab Lab · Community Grading
-   Visual design ported from Claude Design handoff (Slab Lab.html).
-   Card rendering (canvas) and all functional IDs preserved verbatim — this
-   file only redefines colors, typography, layout and decoration.
+   Community Slab Lab
+   Typography & button language refreshed with doodles.app as inspiration
+   (Funnel Sans + Inter, candy-flat pill CTAs, tight-tracked headlines).
+   Card rendering (canvas) and all functional IDs preserved verbatim.
    =========================================================================== */
 
 :root {
-  /* Palette sampled from the underlying NFT artwork */
+  /* Sky bg stays — palette accents bumped toward doodles.app candy saturation */
   --bg: #c1eefe;            /* sky — NFT background */
   --bg-2: #d9f3ff;          /* lighter sky */
   --paper: #fffaf2;         /* warm cream paper */
   --ink: #0a0a0a;           /* pure black like NFT outlines */
   --ink-soft: #4a4a52;
-  --rose: #fbc3de;          /* beanie pink */
-  --pink: #e9badd;          /* face lavender-pink */
-  --mint: #bafecb;          /* beanie band mint */
-  --lilac: #bfb0e3;         /* sunglasses lilac */
-  --peri: #bfb0e3;          /* alias */
-  --butter: #f4db96;        /* hoodie yellow */
+  --rose: #ffb4d6;          /* candy pink, brighter (was #fbc3de) */
+  --pink: #e9badd;
+  --mint: #a3f5c5;          /* candy mint — closer to doodles.app #83FFC1 (was #bafecb) */
+  --mint-bright: #83ffc1;   /* primary CTA, lifted straight from doodles.app accent palette */
+  --lilac: #b8b4ff;         /* candy lavender (was #bfb0e3) */
+  --peri: #b8b4ff;
+  --butter: #ffe48a;        /* candy yellow, brighter (was #f4db96) */
   --line: rgba(10, 10, 10, 0.14);
   --shadow: rgba(10, 10, 10, 0.18);
+
+  /* Type stack */
+  --font-display: 'Funnel Sans', system-ui, sans-serif;
+  --font-body:    'Inter', 'Funnel Sans', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
 }
 
 * { box-sizing: border-box; }
 html, body { margin: 0; padding: 0; }
 body {
-  font-family: 'Sora', system-ui, sans-serif;
+  font-family: var(--font-body);
   background: var(--bg);
   color: var(--ink);
   -webkit-font-smoothing: antialiased;
@@ -33,8 +39,14 @@ body {
   min-height: 100vh;
 }
 
-.mono { font-family: 'JetBrains Mono', monospace; }
-.serif { font-family: 'Instrument Serif', serif; font-weight: 400; }
+.mono { font-family: var(--font-mono); }
+.swirl, .serif {
+  /* Tight italic accent (was Instrument Serif). Funnel Sans italic with negative tracking. */
+  font-family: var(--font-display);
+  font-style: italic;
+  font-weight: 700;
+  letter-spacing: -0.04em;
+}
 
 /* ===== Floating background shapes ===== */
 .bg-shapes {
@@ -75,8 +87,9 @@ body {
 }
 .topbar .center-tag {
   display: inline-flex; align-items: center; gap: 10px;
-  font-family: 'Instrument Serif', serif; font-style: italic;
+  font-family: var(--font-display); font-weight: 700;
   font-size: 22px; color: var(--ink);
+  letter-spacing: -0.03em;
 }
 .topbar .center-tag .swirl-bg {
   position: relative; padding: 0 0.2em;
@@ -92,13 +105,13 @@ body {
 }
 .brand-mark {
   display: inline-flex; align-items: center; gap: 12px;
-  padding: 8px 14px 8px 8px;
+  padding: 8px 16px 8px 8px;
   background: var(--paper);
   border: 1.5px solid var(--ink);
   border-radius: 999px;
   box-shadow: 3px 3px 0 var(--ink);
-  font-family: 'JetBrains Mono', monospace;
-  font-size: 12px; font-weight: 700; letter-spacing: 0.08em;
+  font-family: var(--font-body);
+  font-size: 13px; font-weight: 800; letter-spacing: 0.04em;
   text-transform: uppercase;
   color: var(--ink);
 }
@@ -111,12 +124,13 @@ body {
 }
 .top-meta {
   display: flex; gap: 10px; align-items: center;
-  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  font-family: var(--font-mono); font-size: 11px;
   color: var(--ink-soft); letter-spacing: 0.06em; text-transform: uppercase;
 }
 .top-meta .pill {
-  padding: 6px 12px; border: 1.5px solid var(--ink); border-radius: 999px;
-  background: var(--mint); color: var(--ink); font-weight: 700;
+  padding: 6px 14px; border: 1.5px solid var(--ink); border-radius: 999px;
+  background: var(--mint-bright); color: var(--ink);
+  font-family: var(--font-body); font-weight: 800;
   box-shadow: 2px 2px 0 var(--ink);
 }
 @media (max-width: 640px) {
@@ -145,7 +159,7 @@ body {
 .panel-head {
   display: flex; align-items: center; justify-content: space-between;
   margin-bottom: 18px;
-  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  font-family: var(--font-mono); font-size: 11px;
   text-transform: uppercase; letter-spacing: 0.12em;
   color: var(--ink-soft);
 }
@@ -172,7 +186,7 @@ body {
 .field { margin-bottom: 18px; }
 .field:last-child { margin-bottom: 0; }
 .field label {
-  display: block; font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  display: block; font-family: var(--font-mono); font-size: 10px;
   text-transform: uppercase; letter-spacing: 0.14em;
   color: var(--ink-soft); margin-bottom: 8px;
 }
@@ -180,7 +194,7 @@ body {
 .input {
   width: 100%; padding: 14px 16px;
   background: var(--bg); border: 1.5px solid var(--ink); border-radius: 14px;
-  font-family: 'JetBrains Mono', monospace; font-size: 14px; font-weight: 700;
+  font-family: var(--font-mono); font-size: 14px; font-weight: 700;
   color: var(--ink); appearance: none; outline: none;
   letter-spacing: 0.04em;
   transition: transform 0.15s ease, box-shadow 0.15s ease;
@@ -218,7 +232,7 @@ body {
   padding: 14px 16px;
   background: var(--bg);
   border: 1.5px solid var(--ink); border-radius: 14px;
-  font-family: 'JetBrains Mono', monospace; font-size: 12px; font-weight: 700;
+  font-family: var(--font-mono); font-size: 12px; font-weight: 700;
   letter-spacing: 0.08em; text-transform: uppercase;
   color: var(--ink); cursor: pointer;
   transition: transform 0.12s ease, background 0.15s ease, box-shadow 0.15s ease;
@@ -232,27 +246,31 @@ body {
   box-shadow: 2px 2px 0 var(--ink);
 }
 
-/* ===== Big CTA ("Slab it") ===== */
+/* ===== Big CTA ("Slab it") — doodles.app-style candy pill ===== */
 .btn-cta {
   display: flex; align-items: center; justify-content: center; gap: 10px;
-  width: 100%; padding: 18px;
-  background: var(--ink); color: var(--bg);
-  border: 1.5px solid var(--ink); border-radius: 16px;
-  font-family: 'Sora', sans-serif; font-weight: 700; font-size: 16px;
-  letter-spacing: 0.02em; cursor: pointer;
-  box-shadow: 4px 4px 0 var(--rose);
-  transition: transform 0.18s cubic-bezier(.2,.8,.2,1), box-shadow 0.18s;
+  width: 100%; padding: 18px 24px;
+  background: var(--mint-bright); color: var(--ink);
+  border: 1.5px solid var(--ink); border-radius: 999px;
+  font-family: var(--font-body);
+  font-weight: 800; font-size: 16px;
+  letter-spacing: 0.04em; text-transform: uppercase;
+  cursor: pointer;
+  box-shadow: 0 0 0 var(--ink);
+  transition: transform 0.18s cubic-bezier(.2,.8,.2,1), box-shadow 0.18s, background 0.18s;
 }
 .btn-cta:hover {
   transform: translate(-2px, -2px);
-  box-shadow: 6px 6px 0 var(--rose);
+  box-shadow: 4px 4px 0 var(--ink);
+  background: var(--mint);
 }
 .btn-cta:active {
-  transform: translate(2px, 2px);
-  box-shadow: 1px 1px 0 var(--rose);
+  transform: translate(1px, 1px);
+  box-shadow: 1px 1px 0 var(--ink);
 }
 .btn-cta .sparkle {
-  font-family: 'Instrument Serif', serif; font-style: italic; font-size: 20px;
+  font-family: var(--font-display); font-style: italic; font-weight: 700;
+  font-size: 18px; letter-spacing: -0.04em;
 }
 
 /* ===== Card stage ===== */
@@ -303,7 +321,7 @@ body {
 .stage-spark {
   position: absolute;
   z-index: 2;
-  font-family: 'Instrument Serif', serif; font-style: italic;
+  font-family: var(--font-display); font-style: italic;
   font-size: 28px; color: var(--ink); opacity: 0.55;
   pointer-events: none;
   animation: twinkle 4s ease-in-out infinite;
@@ -324,7 +342,7 @@ body {
 }
 .stage-loading[hidden] { display: none; }
 .loading-bubble {
-  font-family: 'JetBrains Mono', monospace; font-weight: 700;
+  font-family: var(--font-mono); font-weight: 700;
   font-size: 11px; letter-spacing: 0.14em; text-transform: uppercase;
   color: var(--ink);
   background: var(--butter);
@@ -346,7 +364,7 @@ body {
   z-index: 4;
   background: var(--ink); color: var(--bg);
   padding: 10px 18px; border-radius: 12px;
-  font-family: 'JetBrains Mono', monospace; font-size: 11px;
+  font-family: var(--font-mono); font-size: 11px;
   font-weight: 700; letter-spacing: 0.1em; text-transform: uppercase;
   box-shadow: 3px 3px 0 var(--rose);
   animation: toastIn 0.3s cubic-bezier(.2,.8,.2,1);
@@ -365,7 +383,7 @@ body {
   border: 1.5px solid var(--ink);
   border-radius: 12px;
   box-shadow: 2px 2px 0 var(--ink);
-  font-family: 'JetBrains Mono', monospace;
+  font-family: var(--font-mono);
   font-size: 11px;
   color: var(--ink);
   letter-spacing: 0.04em;
@@ -379,7 +397,8 @@ body {
   padding: 14px 16px; width: 100%;
   background: var(--paper); border: 1.5px solid var(--ink);
   border-radius: 14px; cursor: pointer;
-  font-family: 'Sora', sans-serif; font-weight: 600; font-size: 14px;
+  font-family: var(--font-body); font-weight: 700; font-size: 14px;
+  letter-spacing: -0.01em;
   color: var(--ink); text-align: left;
   transition: transform 0.15s cubic-bezier(.2,.8,.2,1), box-shadow 0.15s;
 }
@@ -395,11 +414,11 @@ body {
   width: 36px; height: 36px; border-radius: 10px;
   border: 1.5px solid var(--ink);
   display: inline-flex; align-items: center; justify-content: center;
-  font-family: 'JetBrains Mono', monospace; font-weight: 700; font-size: 10px;
+  font-family: var(--font-mono); font-weight: 700; font-size: 10px;
   flex-shrink: 0;
 }
 .export-btn .meta {
-  font-family: 'JetBrains Mono', monospace; font-size: 9px;
+  font-family: var(--font-mono); font-size: 9px;
   color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.1em;
   margin-top: 2px;
 }
@@ -415,7 +434,7 @@ body {
   border: 1.5px dashed var(--line); border-radius: 12px;
 }
 .tip-label {
-  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  font-family: var(--font-mono); font-size: 10px;
   color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.12em;
   margin-bottom: 6px;
 }
@@ -439,14 +458,16 @@ body {
 }
 .stat:last-child { border-right: 0; }
 .stat .v {
-  font-family: 'Sora', sans-serif; font-weight: 800; font-size: 38px;
-  line-height: 1; color: var(--ink); letter-spacing: -0.02em;
+  /* doodles.app-style tight bold display headline */
+  font-family: var(--font-display); font-weight: 700; font-size: 48px;
+  line-height: 1; color: var(--ink); letter-spacing: -0.05em;
 }
 .stat .v .swirl {
-  font-family: 'Instrument Serif', serif; font-style: italic; font-weight: 400;
+  font-family: var(--font-display); font-style: italic; font-weight: 700;
+  letter-spacing: -0.06em;
 }
 .stat .k {
-  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  font-family: var(--font-mono); font-size: 10px;
   color: var(--ink-soft); text-transform: uppercase; letter-spacing: 0.12em;
   margin-top: 6px;
 }
@@ -462,11 +483,12 @@ body {
   border-top: 1.5px dashed var(--line);
 }
 .footer .row1 {
-  font-family: 'Instrument Serif', serif; font-style: italic;
-  font-size: 22px; color: var(--ink); margin-bottom: 8px;
+  font-family: var(--font-display); font-weight: 700;
+  font-size: 28px; color: var(--ink); margin-bottom: 8px;
+  letter-spacing: -0.04em;
 }
 .footer .row2 {
-  font-family: 'JetBrains Mono', monospace; font-size: 10px;
+  font-family: var(--font-mono); font-size: 10px;
   color: var(--ink-soft); letter-spacing: 0.1em; text-transform: uppercase;
   max-width: 720px; margin: 0 auto; line-height: 1.7;
 }
