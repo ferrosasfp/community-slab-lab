@@ -494,6 +494,156 @@ body {
 }
 .footer a { color: var(--ink); }
 
+/* ===== Wallpaper Lab — device wallpapers, side-wide panel ===== */
+.wp-panel {
+  margin-top: 28px;
+}
+.wp-row {
+  display: flex;
+  gap: 14px;
+  align-items: flex-start;
+  margin-bottom: 18px;
+  flex-wrap: wrap;
+}
+.wp-label {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.18em;
+  text-transform: uppercase;
+  color: var(--ink);
+  flex: 0 0 64px;
+  padding-top: 9px;
+}
+.wp-chips {
+  display: flex; flex-wrap: wrap; gap: 8px; align-items: stretch;
+  flex: 1 1 0;
+}
+.wp-sep {
+  display: inline-block;
+  width: 1px;
+  background: var(--line);
+  margin: 4px 8px;
+  align-self: stretch;
+}
+.wp-chip {
+  font-family: var(--font-mono);
+  font-size: 11px; font-weight: 700;
+  letter-spacing: 0.12em;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  background: var(--paper);
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  padding: 9px 13px;
+  cursor: pointer;
+  transition: all 0.18s ease;
+  display: inline-flex; flex-direction: column; align-items: center; gap: 2px;
+  line-height: 1.15;
+}
+.wp-chip small {
+  font-size: 9px; font-weight: 500;
+  letter-spacing: 0.08em;
+  color: var(--ink-soft);
+  text-transform: none;
+  opacity: 0.7;
+}
+.wp-chip:hover {
+  border-color: var(--ink);
+  color: var(--ink);
+  transform: translateY(-1px);
+}
+.wp-chip.active {
+  background: var(--mint-bright);
+  border-color: var(--ink);
+  color: var(--ink);
+  box-shadow: 0 2px 0 var(--ink);
+}
+.wp-chip.active small {
+  color: var(--ink);
+  opacity: 0.85;
+}
+
+.wp-preview-wrap {
+  position: relative;
+  margin: 14px 0 18px 0;
+  padding: 18px;
+  background:
+    repeating-linear-gradient(45deg, rgba(10,10,10,0.04) 0 22px, rgba(10,10,10,0.07) 22px 44px),
+    var(--bg-2);
+  border: 1px solid var(--line);
+  border-radius: 10px;
+  min-height: 320px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+}
+.wp-preview {
+  max-width: 100%;
+  max-height: 540px;
+  display: block;
+  border-radius: 6px;
+  box-shadow:
+    0 0 0 2px var(--ink),
+    0 12px 30px rgba(10, 10, 10, 0.22);
+  background: var(--paper);
+}
+.wp-meta {
+  position: absolute;
+  top: 6px; right: 12px;
+  font-size: 10px;
+  letter-spacing: 0.16em;
+  color: var(--ink-soft);
+  text-transform: uppercase;
+  background: var(--paper);
+  padding: 4px 10px;
+  border-radius: 3px;
+  border: 1px solid var(--line);
+}
+
+.wp-actions {
+  display: flex;
+  gap: 12px;
+  align-items: stretch;
+  flex-wrap: wrap;
+}
+.wp-cta {
+  flex: 1 1 auto;
+  min-width: 260px;
+}
+.wp-zip {
+  flex: 0 1 auto;
+  background: var(--paper);
+  border: 1px solid var(--ink);
+  border-radius: 999px;
+  padding: 0 22px;
+  color: var(--ink);
+  font-family: var(--font-mono);
+  font-size: 12px;
+  font-weight: 700;
+  letter-spacing: 0.14em;
+  text-transform: uppercase;
+  cursor: pointer;
+  transition: all 0.18s ease;
+}
+.wp-zip:hover {
+  background: var(--butter);
+  transform: translateY(-1px);
+}
+.wp-zip:disabled,
+.wp-cta:disabled {
+  opacity: 0.5;
+  cursor: not-allowed;
+  transform: none;
+}
+
+@media (max-width: 720px) {
+  .wp-label { flex: 0 0 100%; padding-top: 0; margin-bottom: 4px; }
+  .wp-chip { padding: 7px 10px; }
+  .wp-cta { min-width: 100%; }
+  .wp-preview { max-height: 420px; }
+}
+
 /* ===== Reduced motion ===== */
 @media (prefers-reduced-motion: reduce) {
   .blob, .shape, .stage-spark, .loading-bubble, .panel-head .led {

@@ -1146,6 +1146,507 @@ async function exportSlabGLB() {
 }
 
 // ============================================================================
+// Wallpapers — device wallpapers at native resolution
+// ============================================================================
+
+const JSZIP_URL = "https://cdn.jsdelivr.net/npm/jszip@3.10.1/dist/jszip.min.js";
+const JSZIP_SRI = "sha384-+mbV2IY1Zk/X1p/nWllGySJSUN8uMs+gUAN10Or95UBH0fpj6GfKgPmgC5EXieXG";
+
+const WP_DEVICES = {
+  "desktop-fhd": { w: 1920, h: 1080, label: "FHD" },
+  "desktop-qhd": { w: 2560, h: 1440, label: "QHD" },
+  "desktop-4k":  { w: 3840, h: 2160, label: "4K" },
+  "ultrawide":   { w: 3440, h: 1440, label: "Ultrawide" },
+  "iphone":      { w: 1290, h: 2796, label: "iPhone" },
+  "android":     { w: 1440, h: 3120, label: "Android" },
+  "ipad":        { w: 2048, h: 2732, label: "iPad" },
+};
+
+const WP_STYLES = ["minimal", "bloom", "slab", "editorial"];
+const SRC_ASPECT_DOODLES = 1; // square
+
+// --- helpers ---
+function sampleBg(img) {
+  const c = document.createElement("canvas");
+  c.width = 1; c.height = 1;
+  const ctx = c.getContext("2d");
+  const sw = 48, sh = 48;
+  const corners = [
+    [0, 0], [img.naturalWidth - sw, 0],
+    [0, img.naturalHeight - sh], [img.naturalWidth - sw, img.naturalHeight - sh],
+  ];
+  let r = 0, g = 0, b = 0;
+  for (const [sx, sy] of corners) {
+    ctx.clearRect(0, 0, 1, 1);
+    ctx.drawImage(img, sx, sy, sw, sh, 0, 0, 1, 1);
+    const p = ctx.getImageData(0, 0, 1, 1).data;
+    r += p[0]; g += p[1]; b += p[2];
+  }
+  return [Math.round(r / 4), Math.round(g / 4), Math.round(b / 4)];
+}
+
+function shiftRgb([r, g, b], amount) {
+  // Negative amount brightens, positive darkens
+  return [Math.max(0, Math.min(255, r * (1 - amount))), Math.max(0, Math.min(255, g * (1 - amount))), Math.max(0, Math.min(255, b * (1 - amount)))]
+    .map(Math.round);
+}
+
+function rgbStr([r, g, b], a = 1) {
+  return a < 1 ? `rgba(${r},${g},${b},${a})` : `rgb(${r},${g},${b})`;
+}
+
+function drawSoftNoise(ctx, W, H, density = 180, seed = 555) {
+  ctx.save();
+  let gs = seed;
+  const rng = () => { gs = (gs * 1103515245 + 12345) & 0x7fffffff; return gs / 0x7fffffff; };
+  for (let i = 0; i < density; i++) {
+    const x = rng() * W, y = rng() * H, r = 0.5 + rng() * 1.4;
+    ctx.fillStyle = `rgba(${rng() < 0.5 ? "255,255,255" : "60,60,60"},${0.02 + rng() * 0.05})`;
+    ctx.beginPath();
+    ctx.arc(x, y, r, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+}
+
+// --- Style 1: Minimal — soft pastel bg sampled from Doodle + centered NFT ---
+function wpMinimal(ctx, W, H, entry) {
+  const img = entry.image;
+  const accent = sampleBg(img);
+
+  // Soft pastel gradient — keep accent visible, darken slightly toward bottom
+  const grad = ctx.createLinearGradient(0, 0, 0, H);
+  grad.addColorStop(0, rgbStr(shiftRgb(accent, -0.10)));
+  grad.addColorStop(1, rgbStr(shiftRgb(accent, 0.30)));
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+  drawSoftNoise(ctx, W, H, Math.round((W * H) / 20000));
+
+  // NFT square (Doodles are 1:1)
+  const isPortrait = H > W;
+  const targetSide = isPortrait ? Math.round(W * 0.78) : Math.round(H * 0.78);
+  const side = Math.min(targetSide, Math.min(W, H) * 0.86);
+  const nx = (W - side) / 2;
+  const ny = (H - side) / 2;
+
+  // Soft shadow
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.32)";
+  ctx.shadowBlur = Math.round(Math.min(W, H) * 0.045);
+  ctx.shadowOffsetY = Math.round(Math.min(W, H) * 0.012);
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(nx, ny, side, side);
+  ctx.restore();
+
+  ctx.save();
+  ctx.filter = "saturate(1.45) contrast(1.10) brightness(1.02)";
+  ctx.drawImage(img, nx, ny, side, side);
+  ctx.restore();
+
+  // Cream hairline frame
+  ctx.strokeStyle = "rgba(255,255,255,0.55)";
+  ctx.lineWidth = Math.max(2, Math.round(Math.min(W, H) * 0.0016));
+  ctx.strokeRect(nx, ny, side, side);
+
+  // Token mark — bottom-center, Anton stencil
+  const mark = `DOODLES · #${entry.id}`;
+  const markSize = Math.round(Math.min(W, H) * 0.022);
+  ctx.font = `400 ${markSize}px Anton, 'Inter', system-ui, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.textBaseline = "alphabetic";
+  ctx.fillStyle = "rgba(255,255,255,0.92)";
+  const pad = Math.round(Math.min(W, H) * 0.04);
+  ctx.fillText(mark, W / 2, H - pad);
+}
+
+// --- Style 2: Bloom — blurred Doodle bg + sharp Doodle on top ---
+function wpBloom(ctx, W, H, entry) {
+  const img = entry.image;
+
+  // Cover-fit Doodle (1:1) — for landscape, height-bound; portrait, width-bound
+  let bw, bh;
+  if (W > H) { bh = H; bw = bh; }   // 1:1 cover for landscape = match height
+  else       { bw = W; bh = bw; }
+  bw = Math.max(W, bw) * 1.15;
+  bh = Math.max(H, bh) * 1.15;
+  const bx = (W - bw) / 2, by = (H - bh) / 2;
+
+  ctx.save();
+  ctx.filter = `blur(${Math.round(Math.min(W, H) * 0.045)}px) saturate(1.7) brightness(0.85)`;
+  ctx.drawImage(img, bx, by, bw, bh);
+  ctx.restore();
+
+  // Cream vignette glow + corner soft tint
+  const vg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.35, W / 2, H / 2, Math.max(W, H) * 0.75);
+  vg.addColorStop(0, "rgba(0,0,0,0)");
+  vg.addColorStop(1, "rgba(0,0,0,0.45)");
+  ctx.fillStyle = vg;
+  ctx.fillRect(0, 0, W, H);
+
+  // Sharp Doodle on top
+  const isPortrait = H > W;
+  let side;
+  if (isPortrait) side = Math.round(W * 0.74);
+  else            side = Math.round(H * 0.66);
+  const nx = (W - side) / 2;
+  const ny = (H - side) / 2;
+
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.55)";
+  ctx.shadowBlur = Math.round(Math.min(W, H) * 0.04);
+  ctx.shadowOffsetY = Math.round(Math.min(W, H) * 0.008);
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(nx, ny, side, side);
+  ctx.restore();
+
+  ctx.save();
+  ctx.filter = "saturate(1.55) contrast(1.18)";
+  ctx.drawImage(img, nx, ny, side, side);
+  ctx.restore();
+
+  // Hairline frame
+  ctx.strokeStyle = "rgba(255,255,255,0.85)";
+  ctx.lineWidth = Math.max(2, Math.round(Math.min(W, H) * 0.0018));
+  ctx.strokeRect(nx, ny, side, side);
+
+  // Token mark
+  const markSize = Math.round(Math.min(W, H) * 0.022);
+  ctx.font = `400 ${markSize}px Anton, 'Inter', system-ui, sans-serif`;
+  ctx.textAlign = "center";
+  ctx.fillStyle = "rgba(255,255,255,0.86)";
+  const labelY = isPortrait ? ny + side + Math.min(W, H) * 0.05 + markSize : H - Math.round(Math.min(W, H) * 0.04);
+  ctx.fillText(`DOODLES · #${entry.id}`, W / 2, labelY);
+}
+
+// --- Style 3: Slab portrait re-encoded ---
+function wpSlab(ctx, W, H, entry) {
+  // Soft warm cream bg
+  const bg = ctx.createRadialGradient(W / 2, H / 2, Math.min(W, H) * 0.1, W / 2, H / 2, Math.max(W, H) * 0.9);
+  bg.addColorStop(0, "#fff3e0");
+  bg.addColorStop(1, "#e8e0c8");
+  ctx.fillStyle = bg;
+  ctx.fillRect(0, 0, W, H);
+  drawSoftNoise(ctx, W, H, Math.round((W * H) / 18000));
+
+  // Slab at 5:7 ratio
+  const SLAB_ASPECT = SLAB_W / SLAB_H;
+  const margin = 0.92;
+  let drawH = H * margin;
+  let drawW = drawH * SLAB_ASPECT;
+  if (drawW > W * margin) { drawW = W * margin; drawH = drawW / SLAB_ASPECT; }
+
+  const slabW = Math.round(drawW);
+  const slabH = Math.round(drawH);
+  const slabC = document.createElement("canvas");
+  slabC.width = slabW;
+  slabC.height = slabH;
+  drawSlabFront(slabC, entry);
+
+  // Subtle angle
+  const angle = 0.06;
+  const skewX = -angle * 0.18;
+  const visScale = Math.cos(angle) * 0.99 + 0.01;
+
+  ctx.save();
+  ctx.translate(W / 2, H / 2);
+  ctx.transform(visScale, 0, skewX, 1, 0, 0);
+  ctx.shadowColor = "rgba(0,0,0,0.35)";
+  ctx.shadowBlur = Math.round(Math.min(W, H) * 0.04);
+  ctx.shadowOffsetY = Math.round(Math.min(W, H) * 0.015);
+  ctx.drawImage(slabC, -slabW / 2, -slabH / 2);
+  ctx.restore();
+}
+
+// --- Style 4: Editorial — magazine-cover layout ---
+function wpEditorial(ctx, W, H, entry) {
+  const img = entry.image;
+  const accent = sampleBg(img);
+  const isPortrait = H > W;
+
+  // Two-tone background — accent at top, deep cream at bottom
+  const grad = ctx.createLinearGradient(0, 0, W, H);
+  grad.addColorStop(0, rgbStr(shiftRgb(accent, -0.08)));
+  grad.addColorStop(1, "#fff5e8");
+  ctx.fillStyle = grad;
+  ctx.fillRect(0, 0, W, H);
+  drawSoftNoise(ctx, W, H, Math.round((W * H) / 18000));
+
+  // Layout
+  const pad = Math.round(Math.min(W, H) * 0.06);
+  let nftS, nftX, nftY, textX, textY, textW;
+
+  if (isPortrait) {
+    nftS = Math.round(Math.min(H * 0.48, W - pad * 2));
+    nftX = (W - nftS) / 2;
+    nftY = pad * 2;
+    textX = pad;
+    textW = W - pad * 2;
+    textY = nftY + nftS + pad * 1.2;
+  } else {
+    nftS = Math.min(H - pad * 2, W * 0.46);
+    nftX = pad;
+    nftY = (H - nftS) / 2;
+    textX = nftX + nftS + pad;
+    textW = W - textX - pad;
+    textY = pad * 2.5;
+  }
+
+  // NFT
+  ctx.save();
+  ctx.shadowColor = "rgba(0,0,0,0.32)";
+  ctx.shadowBlur = Math.round(Math.min(W, H) * 0.025);
+  ctx.shadowOffsetY = Math.round(Math.min(W, H) * 0.008);
+  ctx.fillStyle = "#fff";
+  ctx.fillRect(nftX, nftY, nftS, nftS);
+  ctx.restore();
+
+  ctx.save();
+  ctx.filter = "saturate(1.50) contrast(1.12)";
+  ctx.drawImage(img, nftX, nftY, nftS, nftS);
+  ctx.restore();
+
+  // Frame
+  ctx.strokeStyle = "rgba(255,255,255,0.85)";
+  ctx.lineWidth = Math.max(2, Math.round(Math.min(W, H) * 0.002));
+  ctx.strokeRect(nftX, nftY, nftS, nftS);
+
+  // Text block
+  ctx.textBaseline = "alphabetic";
+  ctx.textAlign = "left";
+
+  // Kicker
+  const kickSize = Math.round(Math.min(W, H) * 0.018);
+  ctx.font = `700 ${kickSize}px 'JetBrains Mono', Menlo, monospace`;
+  ctx.fillStyle = "#1a1a1a";
+  ctx.fillText("FIELD GRADED · DOODLE LAB", textX, textY + kickSize);
+
+  // Big token id
+  const titleSize = Math.round(Math.min(W, H) * (isPortrait ? 0.13 : 0.16));
+  ctx.font = `400 ${titleSize}px Anton, 'Inter', system-ui, sans-serif`;
+  ctx.fillStyle = "#111";
+  ctx.fillText(`#${entry.id}`, textX, textY + kickSize + titleSize * 1.05);
+
+  // Collection subtitle
+  const subSize = Math.round(titleSize * 0.32);
+  ctx.font = `400 ${subSize}px Anton, 'Inter', system-ui, sans-serif`;
+  ctx.fillStyle = "rgba(40, 40, 40, 0.78)";
+  const subY = textY + kickSize + titleSize * 1.05 + subSize * 1.4;
+  ctx.fillText("DOODLES · AN ETHEREUM COLLECTION", textX, subY);
+
+  // Hairline separator
+  const sepY = subY + subSize * 0.55;
+  ctx.strokeStyle = "rgba(40, 40, 40, 0.45)";
+  ctx.lineWidth = Math.max(1.5, Math.round(Math.min(W, H) * 0.0015));
+  ctx.beginPath();
+  ctx.moveTo(textX, sepY);
+  ctx.lineTo(textX + Math.min(textW, titleSize * 4), sepY);
+  ctx.stroke();
+
+  // Traits 2x2
+  const traits = (entry.metadata && entry.metadata.attributes) || [];
+  const traitsToShow = traits.slice(0, 4);
+  const labelSize = Math.round(Math.min(W, H) * 0.015);
+  const valSize = Math.round(Math.min(W, H) * 0.024);
+  const rowH = Math.round(valSize * 2.3);
+  let traitsY = sepY + subSize * 1.0;
+  for (let i = 0; i < traitsToShow.length; i++) {
+    const t = traitsToShow[i];
+    const ty = traitsY + Math.floor(i / 2) * rowH;
+    const tx = textX + (i % 2) * Math.min(textW / 2, titleSize * 2);
+
+    ctx.font = `700 ${labelSize}px 'JetBrains Mono', Menlo, monospace`;
+    ctx.fillStyle = "#1a1a1a";
+    ctx.fillText(String(t.trait_type || "").toUpperCase(), tx, ty + labelSize);
+
+    ctx.font = `500 ${valSize}px Anton, 'Inter', system-ui, sans-serif`;
+    ctx.fillStyle = "#111";
+    let val = String(t.value || "");
+    const maxW = (textW / 2) - 8;
+    while (val.length > 0 && ctx.measureText(val).width > maxW) val = val.slice(0, -1);
+    ctx.fillText(val, tx, ty + labelSize + valSize + 4);
+  }
+
+  // Flower mark corner
+  const markSize = Math.round(Math.min(W, H) * 0.04);
+  drawCardLogo(ctx, W - pad - markSize * 0.5, H - pad - markSize * 0.5, markSize);
+}
+
+async function renderWallpaper(style, deviceKey, entry) {
+  const { w: W, h: H } = WP_DEVICES[deviceKey];
+  const c = document.createElement("canvas");
+  c.width = W;
+  c.height = H;
+  const ctx = c.getContext("2d");
+  ctx.imageSmoothingQuality = "high";
+
+  switch (style) {
+    case "minimal":   wpMinimal(ctx, W, H, entry); break;
+    case "bloom":     wpBloom(ctx, W, H, entry); break;
+    case "slab":      wpSlab(ctx, W, H, entry); break;
+    case "editorial": wpEditorial(ctx, W, H, entry); break;
+    default: throw new Error("Unknown wallpaper style: " + style);
+  }
+  return c;
+}
+
+// --- JSZip lazy-load ---
+let jszipLoading = null;
+function ensureJSZip() {
+  if (jszipLoading) return jszipLoading;
+  jszipLoading = new Promise((resolve, reject) => {
+    if (window.JSZip) return resolve();
+    const s = document.createElement("script");
+    s.src = JSZIP_URL;
+    s.async = true;
+    s.crossOrigin = "anonymous";
+    s.integrity = JSZIP_SRI;
+    s.onload = () => resolve();
+    s.onerror = () => reject(new Error("Failed to load or verify JSZip"));
+    document.head.appendChild(s);
+  });
+  return jszipLoading;
+}
+
+// --- UI state ---
+let wpState = { style: "minimal", device: "desktop-fhd" };
+let wpPreviewCanvas = null;
+let wpPreviewToken = 0;
+let wpFontsReady = false;
+
+async function updateWallpaperPreview() {
+  if (!current) return;
+  if (!wpFontsReady && document.fonts && document.fonts.ready) {
+    try { await document.fonts.ready; wpFontsReady = true; } catch {}
+  }
+  const myToken = ++wpPreviewToken;
+  const { w, h } = WP_DEVICES[wpState.device];
+  const meta = $("wpMeta");
+  if (meta) meta.textContent = `${w} × ${h} · ${wpState.style[0].toUpperCase() + wpState.style.slice(1)}`;
+
+  const full = await renderWallpaper(wpState.style, wpState.device, current);
+  if (myToken !== wpPreviewToken) return;
+  wpPreviewCanvas = full;
+
+  const previewEl = $("wpPreview");
+  if (!previewEl) return;
+  const wrap = previewEl.parentElement;
+  const wrapRect = wrap.getBoundingClientRect();
+  const maxDispW = Math.max(200, wrapRect.width);
+  const maxDispH = Math.max(160, Math.min(560, wrapRect.height - 40));
+
+  const ar = w / h;
+  let dW = maxDispW, dH = dW / ar;
+  if (dH > maxDispH) { dH = maxDispH; dW = dH * ar; }
+
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  previewEl.width = Math.round(dW * dpr);
+  previewEl.height = Math.round(dH * dpr);
+  previewEl.style.width = Math.round(dW) + "px";
+  previewEl.style.height = Math.round(dH) + "px";
+
+  const pctx = previewEl.getContext("2d");
+  pctx.imageSmoothingQuality = "high";
+  pctx.clearRect(0, 0, previewEl.width, previewEl.height);
+  pctx.drawImage(full, 0, 0, previewEl.width, previewEl.height);
+}
+
+function wpShowError(msg) {
+  const el = $("wpError");
+  if (!el) return;
+  if (!msg) { el.hidden = true; el.textContent = ""; return; }
+  el.hidden = false;
+  el.textContent = msg;
+  setTimeout(() => { if (el.textContent === msg) { el.hidden = true; el.textContent = ""; } }, 5000);
+}
+
+async function downloadWallpaperSingle() {
+  if (!current) return wpShowError("Load a Doodle first");
+  setBusy(true);
+  setLoading(true, "rendering wallpaper…");
+  try {
+    const c = wpPreviewCanvas && wpPreviewCanvas.width === WP_DEVICES[wpState.device].w
+      ? wpPreviewCanvas
+      : await renderWallpaper(wpState.style, wpState.device, current);
+    const { w, h } = WP_DEVICES[wpState.device];
+    const blob = await canvasToBlob(c, "image/png");
+    downloadBlob(blob, `doodle-wallpaper-${current.id}-${wpState.style}-${w}x${h}.png`);
+    showToast(`✿ ${wpState.style} ${w}×${h} saved`);
+  } catch (err) {
+    console.error(err);
+    wpShowError(err.message || "Wallpaper export failed");
+  } finally {
+    setBusy(false);
+    setLoading(false);
+  }
+}
+
+async function downloadWallpaperAllSizes() {
+  if (!current) return wpShowError("Load a Doodle first");
+  setBusy(true);
+  setLoading(true, "rendering all sizes…");
+  try {
+    await ensureJSZip();
+    const zip = new window.JSZip();
+    const folder = zip.folder(`doodle-${current.id}-${wpState.style}`);
+    for (const key of Object.keys(WP_DEVICES)) {
+      const { w, h } = WP_DEVICES[key];
+      setLoading(true, `${wpState.style} · ${w}×${h}…`);
+      const c = await renderWallpaper(wpState.style, key, current);
+      const blob = await canvasToBlob(c, "image/png");
+      folder.file(`doodle-${current.id}-${wpState.style}-${w}x${h}.png`, blob);
+    }
+    setLoading(true, "zipping…");
+    const out = await zip.generateAsync({ type: "blob", compression: "STORE" });
+    downloadBlob(out, `doodle-wallpapers-${current.id}-${wpState.style}.zip`);
+    showToast(`✿ ZIP saved — ${Object.keys(WP_DEVICES).length} sizes`);
+  } catch (err) {
+    console.error(err);
+    wpShowError(err.message || "ZIP export failed");
+  } finally {
+    setBusy(false);
+    setLoading(false);
+  }
+}
+
+function wireWallpaperUI() {
+  document.querySelectorAll('.wp-chips[data-group="style"] .wp-chip').forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const next = btn.dataset.style;
+      if (next === wpState.style) return;
+      wpState.style = next;
+      document.querySelectorAll('.wp-chips[data-group="style"] .wp-chip')
+        .forEach((b) => b.classList.toggle("active", b.dataset.style === next));
+      updateWallpaperPreview();
+    });
+  });
+  document.querySelectorAll('.wp-chips[data-group="device"] .wp-chip').forEach((btn) => {
+    btn.addEventListener("click", () => {
+      const next = btn.dataset.device;
+      if (next === wpState.device) return;
+      wpState.device = next;
+      document.querySelectorAll('.wp-chips[data-group="device"] .wp-chip')
+        .forEach((b) => b.classList.toggle("active", b.dataset.device === next));
+      updateWallpaperPreview();
+    });
+  });
+  $("wpDownload")?.addEventListener("click", downloadWallpaperSingle);
+  $("wpDownloadAll")?.addEventListener("click", downloadWallpaperAllSizes);
+
+  let resizeTimer = null;
+  window.addEventListener("resize", () => {
+    clearTimeout(resizeTimer);
+    resizeTimer = setTimeout(() => { if (current) updateWallpaperPreview(); }, 220);
+  });
+}
+
+window.__wp = {
+  renderWallpaper,
+  WP_DEVICES,
+  WP_STYLES,
+  current: () => current,
+};
+
+// ============================================================================
 // Load slab flow
 // ============================================================================
 async function loadSlab(rawId) {
@@ -1162,6 +1663,7 @@ async function loadSlab(rawId) {
     const entry = await fetchDoodle(id);
     current = entry;
     rerenderSlabTexture();
+    updateWallpaperPreview();
     showToast(`✿ Doodle #${id} loaded in ${entry.loadMs}ms`);
   } catch (e) {
     console.error(e);
@@ -1240,6 +1742,7 @@ exportBtns.forEach((btn) => {
   }
 
   startAutoRotate();
+  wireWallpaperUI();
 
   const id = String(Math.floor(Math.random() * (DOODLES.maxId + 1)));
   tokenInput.value = id;

@@ -202,6 +202,59 @@
 
         </main>
 
+        <!-- Wallpapers — high-res device wallpapers from the Doodle -->
+        <section class="wp-panel panel" id="wallpaper" aria-label="Wallpapers">
+          <div class="panel-head">
+            <span><span class="num">3</span><span class="panel-head-label">Wallpaper Lab</span></span>
+            <span class="right">
+              <span class="led"></span>
+              <span class="led" style="background: #5a9bff; animation-delay: 0.4s;"></span>
+            </span>
+          </div>
+
+          <div class="wp-row">
+            <div class="wp-label">Style</div>
+            <div class="wp-chips" data-group="style">
+              <button class="wp-chip active" data-style="minimal" type="button">Minimal</button>
+              <button class="wp-chip" data-style="bloom" type="button">Bloom</button>
+              <button class="wp-chip" data-style="slab" type="button">Slab</button>
+              <button class="wp-chip" data-style="editorial" type="button">Editorial</button>
+            </div>
+          </div>
+
+          <div class="wp-row">
+            <div class="wp-label">Device</div>
+            <div class="wp-chips" data-group="device">
+              <button class="wp-chip active" data-device="desktop-fhd" type="button">FHD<small>1920×1080</small></button>
+              <button class="wp-chip" data-device="desktop-qhd" type="button">QHD<small>2560×1440</small></button>
+              <button class="wp-chip" data-device="desktop-4k" type="button">4K<small>3840×2160</small></button>
+              <button class="wp-chip" data-device="ultrawide" type="button">21:9<small>3440×1440</small></button>
+              <span class="wp-sep" aria-hidden="true"></span>
+              <button class="wp-chip" data-device="iphone" type="button">iPhone<small>1290×2796</small></button>
+              <button class="wp-chip" data-device="android" type="button">Android<small>1440×3120</small></button>
+              <button class="wp-chip" data-device="ipad" type="button">iPad<small>2048×2732</small></button>
+            </div>
+          </div>
+
+          <div class="wp-preview-wrap" id="wpPreviewWrap">
+            <canvas id="wpPreview" class="wp-preview" aria-label="Wallpaper preview"></canvas>
+            <div class="wp-meta mono" id="wpMeta">— · —</div>
+          </div>
+
+          <div class="wp-actions">
+            <button class="btn-cta wp-cta" id="wpDownload" type="button">
+              <span class="sparkle">✿</span>
+              <span>Download wallpaper</span>
+              <span class="sparkle">✿</span>
+            </button>
+            <button class="btn-secondary wp-zip" id="wpDownloadAll" type="button">
+              <span>↓ ZIP all sizes (this style)</span>
+            </button>
+          </div>
+
+          <p class="dock-error" id="wpError" hidden></p>
+        </section>
+
         <!-- Stats strip -->
         <div class="stats">
           <div class="stat">
